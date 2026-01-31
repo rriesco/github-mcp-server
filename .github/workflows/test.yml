@@ -23,10 +23,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --dev
-
-      - name: Run linting
-        run: uv run ruff check src/
+        run: uv sync --extra dev
 
       - name: Run type checking
         run: uv run mypy src/github_mcp_server --strict
@@ -54,7 +51,7 @@ jobs:
         run: uv python install 3.12
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
 
       - name: Run integration tests
         env:
