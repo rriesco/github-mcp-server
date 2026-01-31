@@ -231,15 +231,6 @@ github-mcp-server/
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Contributing
-
-Contributions are welcome! Please read the contributing guidelines before submitting PRs.
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Submit a pull request
-
 ## Links
 
 - [MCP Protocol Documentation](https://modelcontextprotocol.io/)

@@ -58,9 +58,9 @@ Get started with the GitHub MCP Server in 5 minutes:
 
 ## Issue Operations
 
-### `create_issue`
+### `create_issues`
 
-Create a new GitHub issue with labels and milestone.
+Create one or more GitHub issues with labels and milestone.
 
 **Parameters:**
 - `title` (str, required): Issue title
@@ -84,16 +84,18 @@ Create a new GitHub issue with labels and milestone.
 
 **Example:**
 ```python
-result = create_issue(
-    title="[Phase 1.1] Implement data fetcher",
-    body="""## Context
+result = create_issues(
+    issues=[{
+        "title": "[Phase 1.1] Implement data fetcher",
+        "body": """## Context
 The system needs a robust data fetching layer...
 
 ## Implementation Approach
 ...
     """,
-    labels=["type: feature", "area: data"],
-    milestone=7
+        "labels": ["type: feature", "area: data"],
+        "milestone": 7
+    }]
 )
 ```
 
@@ -417,12 +419,14 @@ milestone_number = phase_4["number"]  # Use this in create_issue
 milestones = list_milestones()
 milestone = next(m for m in milestones["milestones"] if m["title"] == "Phase 4")
 
-# Step 2: Use milestone number in create_issue
-issue = create_issue(
-    title="Implement feature X",
-    body="...",
-    labels=["type: feature"],
-    milestone=milestone["number"]
+# Step 2: Use milestone number in create_issues
+issue = create_issues(
+    issues=[{
+        "title": "Implement feature X",
+        "body": "...",
+        "labels": ["type: feature"],
+        "milestone": milestone["number"]
+    }]
 )
 ```
 
@@ -1342,7 +1346,7 @@ Apply consistent labeling across related issues:
 
 ```python
 # Get all open issues in milestone
-issues = get_issues(milestone=7, state="open")
+issues = list_issues(milestone="Phase 1", state="open")
 
 # Add priority labels
 batch_add_labels(
@@ -1650,7 +1654,7 @@ Result: Created 10/10 issues successfully in 2.1 seconds
 Quick reference for all available tools:
 
 ### Issue Management
-- [`create_issue`](#create_issue) - Create a new issue
+- [`create_issues`](#create_issues) - Create one or more issues
 - [`get_issue`](#get_issue) - Retrieve issue details
 - [`list_issues`](#list_issues) - List and filter issues with advanced queries
 - [`close_issue`](#close_issue) - Close an issue with optional comment and state reason
@@ -1681,8 +1685,7 @@ Quick reference for all available tools:
 ### By Use Case
 
 **Creating Content:**
-- Single: `create_issue`, `create_milestone`, `create_pr_with_content`
-- Bulk: `batch_create_issues`
+- `create_issues`, `create_milestone`, `create_pr_with_content`
 
 **Reading Information:**
 - `get_issue`, `list_issues`, `list_milestones`, `check_ci_status`
