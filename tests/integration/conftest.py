@@ -154,6 +154,54 @@ def cleanup_milestones(
             print(f"⚠ Warning: Failed to cleanup milestone #{milestone_number}: {e}")
 
 
+@pytest.fixture(scope="session")
+def test_milestone(test_repository: Repository) -> int | None:
+    """Get an existing milestone for integration tests.
+
+    Returns:
+        Milestone number if one exists, None otherwise.
+        Tests requiring milestones should skip if None.
+    """
+    try:
+        # Try to find an existing open milestone
+        milestones = list(test_repository.get_milestones(state="open"))
+        if milestones:
+            return milestones[0].number
+
+        # Fall back to any closed milestone
+        milestones = list(test_repository.get_milestones(state="closed"))
+        if milestones:
+            return milestones[0].number
+
+        return None
+    except Exception:
+        return None
+
+
+@pytest.fixture(scope="session")
+def test_pr(test_repository: Repository) -> int | None:
+    """Get an existing PR for integration tests.
+
+    Returns:
+        PR number if one exists, None otherwise.
+        Tests requiring PRs should skip if None.
+    """
+    try:
+        # Try to find an existing open PR
+        prs = list(test_repository.get_pulls(state="open"))
+        if prs:
+            return prs[0].number
+
+        # Fall back to any closed PR
+        prs = list(test_repository.get_pulls(state="closed"))
+        if prs:
+            return prs[0].number
+
+        return None
+    except Exception:
+        return None
+
+
 def assert_issue_properties(
     issue_data: dict,
     expected_title: str | None = None,

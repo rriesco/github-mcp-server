@@ -18,20 +18,20 @@ class TestGetPullRequestIntegration:
     def test_get_existing_merged_pr(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
-        """Test getting details of an existing merged PR via real GitHub API.
+        """Test getting details of an existing PR via real GitHub API.
 
         This test:
-        1. Fetches a known merged PR from the repository
+        1. Fetches a known PR from the repository
         2. Verifies all returned fields are correct
         3. Validates data types and structure
-
-        Note: Uses PR #1 which should exist in most repositories.
-        If this test fails, update pr_number to a known merged PR.
         """
-        # Use PR #1 which should exist in most repositories
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
         result = get_pull_request(
-            pr_number=1,
+            pr_number=test_pr,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -114,37 +114,35 @@ class TestGetPullRequestIntegration:
     def test_get_pr_different_states(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that get_pull_request works for PRs in different states.
 
         Note: This test may need to be adjusted based on available PRs.
         """
-        # Try to fetch PR #1 (commonly exists)
-        try:
-            result = get_pull_request(
-                pr_number=1,
-                owner=test_config["owner"],
-                repo=test_config["repo"],
-            )
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
 
-            # Just verify we got valid data
-            assert result["number"] == 1
-            assert isinstance(result["state"], str)
-            assert isinstance(result["merged"], bool)
+        result = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
 
-            # Verify merged_at is None if not merged, or a timestamp if merged
-            if result["merged"]:
-                assert result["merged_at"] is not None
-                merged_dt = datetime.fromisoformat(result["merged_at"])
-                assert merged_dt <= datetime.now().astimezone()
-            else:
-                # For open PRs or closed-but-not-merged PRs
-                if result["state"] == "open":
-                    assert result["merged_at"] is None
+        # Just verify we got valid data
+        assert result["number"] == test_pr
+        assert isinstance(result["state"], str)
+        assert isinstance(result["merged"], bool)
 
-        except GitHubAPIError:
-            # If PR #1 doesn't exist, that's okay - skip this test
-            pytest.skip("PR #1 not found in repository")
+        # Verify merged_at is None if not merged, or a timestamp if merged
+        if result["merged"]:
+            assert result["merged_at"] is not None
+            merged_dt = datetime.fromisoformat(result["merged_at"])
+            assert merged_dt <= datetime.now().astimezone()
+        else:
+            # For open PRs or closed-but-not-merged PRs
+            if result["state"] == "open":
+                assert result["merged_at"] is None
 
     def test_get_pr_nonexistent_raises_error(
         self,
@@ -165,66 +163,66 @@ class TestGetPullRequestIntegration:
     def test_get_pr_validates_all_fields(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that all fields are present in the response."""
-        try:
-            result = get_pull_request(
-                pr_number=1,
-                owner=test_config["owner"],
-                repo=test_config["repo"],
-            )
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
 
-            # Verify all expected fields are present
-            required_fields = [
-                "number",
-                "title",
-                "state",
-                "merged",
-                "mergeable",
-                "mergeable_state",
-                "draft",
-                "head",
-                "base",
-                "commits",
-                "additions",
-                "deletions",
-                "changed_files",
-                "created_at",
-                "updated_at",
-                "merged_at",
-                "url",
-            ]
+        result = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
 
-            for field in required_fields:
-                assert field in result, f"Missing required field: {field}"
+        # Verify all expected fields are present
+        required_fields = [
+            "number",
+            "title",
+            "state",
+            "merged",
+            "mergeable",
+            "mergeable_state",
+            "draft",
+            "head",
+            "base",
+            "commits",
+            "additions",
+            "deletions",
+            "changed_files",
+            "created_at",
+            "updated_at",
+            "merged_at",
+            "url",
+        ]
 
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        for field in required_fields:
+            assert field in result, f"Missing required field: {field}"
 
     def test_get_pr_stats_are_positive(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that PR stats (commits, additions, deletions, files) are non-negative."""
-        try:
-            result = get_pull_request(
-                pr_number=1,
-                owner=test_config["owner"],
-                repo=test_config["repo"],
-            )
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
 
-            # Stats should be non-negative
-            assert result["commits"] >= 0
-            assert result["additions"] >= 0
-            assert result["deletions"] >= 0
-            assert result["changed_files"] >= 0
+        result = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
 
-            # A PR should have at least 1 commit and 1 changed file
-            assert result["commits"] > 0
-            assert result["changed_files"] > 0
+        # Stats should be non-negative
+        assert result["commits"] >= 0
+        assert result["additions"] >= 0
+        assert result["deletions"] >= 0
+        assert result["changed_files"] >= 0
 
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        # A PR should have at least 1 commit and 1 changed file
+        assert result["commits"] > 0
+        assert result["changed_files"] > 0
 
 
 @pytest.mark.integration
@@ -255,12 +253,16 @@ class TestUpdatePRIntegration:
     def test_update_pr_invalid_state_raises_error(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that invalid state value raises ValueError."""
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
         # This test will fail before making API call due to validation
         with pytest.raises(ValueError) as exc_info:
             update_pr(
-                pr_number=1,
+                pr_number=test_pr,
                 state="invalid_state",
                 owner=test_config["owner"],
                 repo=test_config["repo"],
@@ -274,98 +276,96 @@ class TestUpdatePRIntegration:
     def test_update_pr_no_changes_returns_empty_list(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that calling update_pr with no fields returns empty updated_fields.
 
         This test is safe as it makes no changes to any PR.
         """
-        # Try to call update_pr with no updates on PR #1
-        # If PR #1 doesn't exist, test will fail - that's acceptable
-        try:
-            result = update_pr(
-                pr_number=1,
-                owner=test_config["owner"],
-                repo=test_config["repo"],
-            )
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
 
-            # Verify structure
-            assert "updated_fields" in result
-            assert result["updated_fields"] == []
-            assert "number" in result
-            assert result["number"] == 1
+        result = update_pr(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
 
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        # Verify structure
+        assert "updated_fields" in result
+        assert result["updated_fields"] == []
+        assert "number" in result
+        assert result["number"] == test_pr
 
     def test_update_merged_pr_raises_error(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that attempting to update a merged PR raises error.
 
-        Note: This test assumes PR #1 exists and is merged.
-        If not, the test will skip.
+        Note: This test requires a merged PR.
+        If the available PR is not merged, the test will skip.
         """
-        try:
-            # First check if PR #1 exists and is merged
-            pr_info = get_pull_request(
-                pr_number=1,
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
+        # First check if test PR exists and is merged
+        pr_info = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
+
+        if not pr_info["merged"]:
+            pytest.skip("Test PR is not merged, cannot test merged PR update error")
+
+        # Try to update the merged PR - should fail
+        with pytest.raises(Exception) as exc_info:
+            update_pr(
+                pr_number=test_pr,
+                title="This should fail",
                 owner=test_config["owner"],
                 repo=test_config["repo"],
             )
 
-            if not pr_info["merged"]:
-                pytest.skip("PR #1 is not merged, cannot test merged PR update error")
-
-            # Try to update the merged PR - should fail
-            with pytest.raises(Exception) as exc_info:
-                update_pr(
-                    pr_number=1,
-                    title="This should fail",
-                    owner=test_config["owner"],
-                    repo=test_config["repo"],
-                )
-
-            # Verify error message mentions merged status
-            error_msg = str(exc_info.value).lower()
-            assert "merged" in error_msg
-
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        # Verify error message mentions merged status
+        error_msg = str(exc_info.value).lower()
+        assert "merged" in error_msg
 
     def test_update_pr_validates_response_structure(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that update_pr returns correctly structured response.
 
         This test makes no actual changes (no fields provided).
         """
-        try:
-            result = update_pr(
-                pr_number=1,
-                owner=test_config["owner"],
-                repo=test_config["repo"],
-            )
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
 
-            # Verify all required fields are present
-            required_fields = ["number", "title", "state", "updated_fields", "url"]
-            for field in required_fields:
-                assert field in result, f"Missing required field: {field}"
+        result = update_pr(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
 
-            # Verify types
-            assert isinstance(result["number"], int)
-            assert isinstance(result["title"], str)
-            assert isinstance(result["state"], str)
-            assert isinstance(result["updated_fields"], list)
-            assert isinstance(result["url"], str)
+        # Verify all required fields are present
+        required_fields = ["number", "title", "state", "updated_fields", "url"]
+        for field in required_fields:
+            assert field in result, f"Missing required field: {field}"
 
-            # Verify URL format
-            assert "github.com" in result["url"]
-            assert "/pull/" in result["url"]
+        # Verify types
+        assert isinstance(result["number"], int)
+        assert isinstance(result["title"], str)
+        assert isinstance(result["state"], str)
+        assert isinstance(result["updated_fields"], list)
+        assert isinstance(result["url"], str)
 
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        # Verify URL format
+        assert "github.com" in result["url"]
+        assert "/pull/" in result["url"]
 
 
 @pytest.mark.integration
@@ -395,47 +395,51 @@ class TestMergePRIntegration:
     def test_merge_pr_already_merged_raises_error(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that attempting to merge already-merged PR raises error.
 
-        Note: This test assumes PR #1 exists and is already merged.
-        If not, the test will skip.
+        Note: This test requires a merged PR.
+        If the available PR is not merged, the test will skip.
         """
-        try:
-            # First check if PR #1 exists and is merged
-            pr_info = get_pull_request(
-                pr_number=1,
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
+        # First check if test PR exists and is merged
+        pr_info = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
+
+        if not pr_info["merged"]:
+            pytest.skip("Test PR is not merged, cannot test already-merged error")
+
+        # Try to merge the already-merged PR - should fail
+        with pytest.raises(Exception) as exc_info:
+            merge_pr(
+                pr_number=test_pr,
                 owner=test_config["owner"],
                 repo=test_config["repo"],
             )
 
-            if not pr_info["merged"]:
-                pytest.skip("PR #1 is not merged, cannot test already-merged error")
-
-            # Try to merge the already-merged PR - should fail
-            with pytest.raises(Exception) as exc_info:
-                merge_pr(
-                    pr_number=1,
-                    owner=test_config["owner"],
-                    repo=test_config["repo"],
-                )
-
-            # Verify error message mentions merged status
-            error_msg = str(exc_info.value).lower()
-            assert "merged" in error_msg or "already" in error_msg
-
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")
+        # Verify error message mentions merged status
+        error_msg = str(exc_info.value).lower()
+        assert "merged" in error_msg or "already" in error_msg
 
     def test_merge_pr_invalid_merge_method_raises_error(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that invalid merge_method value raises ValueError."""
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
         # This test will fail before making API call due to validation
         with pytest.raises(ValueError) as exc_info:
             merge_pr(
-                pr_number=1,
+                pr_number=test_pr,
                 merge_method="invalid_method",
                 owner=test_config["owner"],
                 repo=test_config["repo"],
@@ -449,6 +453,7 @@ class TestMergePRIntegration:
     def test_merge_pr_validates_response_structure(
         self,
         test_config: dict,
+        test_pr: int | None,
     ) -> None:
         """Test that merge_pr returns correctly structured response on success.
 
@@ -456,26 +461,22 @@ class TestMergePRIntegration:
         by checking what WOULD be returned, but doesn't actually perform a merge.
         To avoid actual merges in CI, this test validates error responses.
         """
-        # Use PR #1 which should be already merged
-        # This will fail with "already merged" error, but we can validate
-        # that the error handling and response structure is correct
-        try:
-            pr_info = get_pull_request(
-                pr_number=1,
+        if test_pr is None:
+            pytest.skip("No PR available in test repository")
+
+        pr_info = get_pull_request(
+            pr_number=test_pr,
+            owner=test_config["owner"],
+            repo=test_config["repo"],
+        )
+
+        if not pr_info["merged"]:
+            pytest.skip("Test PR is not merged, cannot test response structure safely")
+
+        # This should raise an error, but we test the error structure
+        with pytest.raises(Exception):
+            merge_pr(
+                pr_number=test_pr,
                 owner=test_config["owner"],
                 repo=test_config["repo"],
             )
-
-            if not pr_info["merged"]:
-                pytest.skip("PR #1 is not merged, cannot test response structure safely")
-
-            # This should raise an error, but we test the error structure
-            with pytest.raises(Exception):
-                merge_pr(
-                    pr_number=1,
-                    owner=test_config["owner"],
-                    repo=test_config["repo"],
-                )
-
-        except GitHubAPIError:
-            pytest.skip("PR #1 not found in repository")

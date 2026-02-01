@@ -15,7 +15,7 @@ def create_issue(
     title: str,
     body: str,
     labels: list[str],
-    milestone: int,
+    milestone: int | None,
     owner: str,
     repo: str,
 ) -> dict:
@@ -23,8 +23,12 @@ def create_issue(
 
     Maintains backward compatibility for integration tests.
     """
+    issue_data: dict = {"title": title, "body": body, "labels": labels}
+    if milestone is not None:
+        issue_data["milestone"] = milestone
+
     result = create_issues(
-        issues=[{"title": title, "body": body, "labels": labels, "milestone": milestone}],
+        issues=[issue_data],
         owner=owner,
         repo=repo,
     )
@@ -40,6 +44,7 @@ class TestCreateIssueIntegration:
     def test_create_issue_with_labels_and_milestone(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -50,6 +55,9 @@ class TestCreateIssueIntegration:
         2. Verifies all returned fields are correct
         3. Cleanup fixture automatically closes the issue after test
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create issue using the MCP tool
         result = create_issue(
             title="[TEST] Integration test issue - safe to close",
@@ -63,7 +71,7 @@ Validates that the create_issue MCP tool correctly creates issues via GitHub API
 This issue will be automatically closed by the test cleanup fixture.
 """,
             labels=["test"],
-            milestone=7,  # Using Phase 0 milestone
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -96,15 +104,19 @@ This issue will be automatically closed by the test cleanup fixture.
     def test_create_issue_with_multiple_labels(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test creating issue with multiple labels."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         result = create_issue(
             title="[TEST] Multiple labels test",
             body="Test issue with multiple labels.",
             labels=["test", "documentation"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -136,8 +148,12 @@ This issue will be automatically closed by the test cleanup fixture.
     def test_create_issue_empty_labels_raises_error(
         self,
         test_config: dict,
+        test_milestone: int | None,
     ) -> None:
         """Test that empty labels list raises appropriate error."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Note: The current implementation doesn't validate empty labels at the
         # Python level, but GitHub API might reject it. This tests actual behavior.
         try:
@@ -145,7 +161,7 @@ This issue will be automatically closed by the test cleanup fixture.
                 title="[TEST] No labels test",
                 body="Test with no labels - may succeed or fail depending on repo config.",
                 labels=[],
-                milestone=7,
+                milestone=test_milestone,
                 owner=test_config["owner"],
                 repo=test_config["repo"],
             )
@@ -165,6 +181,7 @@ class TestGetIssueIntegration:
     def test_get_issue_retrieves_existing_issue(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -175,12 +192,15 @@ class TestGetIssueIntegration:
         2. Retrieves it using get_issue
         3. Verifies all fields match
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # First create an issue
         create_result = create_issue(
             title="[TEST] Issue to retrieve",
             body="Test body content for retrieval",
             labels=["test", "integration"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -241,6 +261,7 @@ class TestIssueWorkflow:
     def test_create_and_retrieve_workflow(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -248,6 +269,9 @@ class TestIssueWorkflow:
 
         This validates the entire issue lifecycle from creation to retrieval.
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Step 1: Create issue
         title = "[TEST] Full workflow test"
         body = """## Test Workflow
@@ -268,7 +292,7 @@ All data should match between creation and retrieval responses.
             title=title,
             body=body,
             labels=labels,
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -572,16 +596,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_without_comment(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test closing an issue without a comment via real GitHub API."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create a test issue first
         create_result = create_issue(
             title="[TEST] Issue to close without comment",
             body="This issue will be closed without a comment.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -614,16 +642,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_with_comment(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test closing an issue with a comment via real GitHub API."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create a test issue
         create_result = create_issue(
             title="[TEST] Issue to close with comment",
             body="This issue will be closed with a comment.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -656,16 +688,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_with_state_reason_completed(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test closing an issue with state_reason='completed'."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create a test issue
         create_result = create_issue(
             title="[TEST] Issue to close as completed",
             body="This issue will be closed with state_reason='completed'.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -689,16 +725,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_with_state_reason_not_planned(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test closing an issue with state_reason='not_planned'."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create a test issue
         create_result = create_issue(
             title="[TEST] Issue to close as not planned",
             body="This issue will be closed with state_reason='not_planned'.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -722,16 +762,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_with_comment_and_state_reason(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test closing issue with both comment and state_reason."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create a test issue
         create_result = create_issue(
             title="[TEST] Issue to close with comment and state",
             body="This issue will be closed with both comment and state_reason.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -757,16 +801,20 @@ class TestCloseIssueIntegration:
     def test_close_issue_already_closed_is_idempotent(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test that closing an already-closed issue is idempotent."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create and close an issue
         create_result = create_issue(
             title="[TEST] Issue to close twice",
             body="This issue will be closed twice to test idempotency.",
             labels=["test"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )
@@ -816,6 +864,7 @@ class TestIssueLifecycleWorkflow:
     def test_complete_issue_lifecycle(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -823,6 +872,9 @@ class TestIssueLifecycleWorkflow:
 
         This validates the entire issue lifecycle from creation to closure.
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Step 1: Create issue
         title = "[TEST] Complete lifecycle test"
         body = """## Lifecycle Test
@@ -842,7 +894,7 @@ Issue should exist and be closed successfully.
             title=title,
             body=body,
             labels=["test", "integration"],
-            milestone=7,
+            milestone=test_milestone,
             owner=test_config["owner"],
             repo=test_config["repo"],
         )

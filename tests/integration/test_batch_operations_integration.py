@@ -20,6 +20,7 @@ class TestBatchCreateIssuesIntegration:
     def test_batch_create_multiple_issues_succeeds(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -31,6 +32,9 @@ class TestBatchCreateIssuesIntegration:
         3. Execution time is reasonable
         4. Success rate is 100%
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         issues_data = [
             {
                 "title": f"[TEST] Batch issue {i} - safe to close",
@@ -44,7 +48,7 @@ Validates batch creation functionality.
 Will be automatically closed by test cleanup.
 """,
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             }
             for i in range(1, 6)  # Create 5 issues
         ]
@@ -80,6 +84,7 @@ Will be automatically closed by test cleanup.
     def test_batch_create_with_partial_failures(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -87,12 +92,15 @@ Will be automatically closed by test cleanup.
 
         Creates a mix of valid and invalid issues to test error handling.
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         issues_data = [
             {
                 "title": "[TEST] Valid issue 1",
                 "body": "This should succeed",
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             },
             {
                 "title": "[TEST] Invalid milestone",
@@ -104,7 +112,7 @@ Will be automatically closed by test cleanup.
                 "title": "[TEST] Valid issue 2",
                 "body": "This should succeed",
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             },
         ]
 
@@ -135,6 +143,7 @@ Will be automatically closed by test cleanup.
     def test_batch_create_performance_vs_sequential(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -143,6 +152,9 @@ Will be automatically closed by test cleanup.
         Creates issues both ways and compares execution time.
         Batch should be at least 2x faster for 10 issues.
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         num_issues = 10
 
         # Create issues for batch test
@@ -151,7 +163,7 @@ Will be automatically closed by test cleanup.
                 "title": f"[TEST] Batch perf test {i}",
                 "body": "Performance test issue",
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             }
             for i in range(num_issues)
         ]
@@ -198,10 +210,15 @@ Will be automatically closed by test cleanup.
     def test_batch_create_exceeds_max_limit_raises_error(
         self,
         test_config: dict,
+        test_milestone: int | None,
     ) -> None:
         """Test that exceeding max batch size raises ValueError."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         large_batch = [
-            {"title": f"Issue {i}", "labels": ["test"], "milestone": 7} for i in range(51)
+            {"title": f"Issue {i}", "labels": ["test"], "milestone": test_milestone}
+            for i in range(51)
         ]
 
         with pytest.raises(ValueError, match="Maximum 50 issues"):
@@ -219,10 +236,14 @@ class TestBatchUpdateIssuesIntegration:
     def test_batch_update_multiple_issues(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test updating multiple issues in batch."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # First create issues to update
         create_result = batch_create_issues(
             issues=[
@@ -230,7 +251,7 @@ class TestBatchUpdateIssuesIntegration:
                     "title": f"[TEST] Update test {i}",
                     "body": "Original body",
                     "labels": ["test"],
-                    "milestone": 7,
+                    "milestone": test_milestone,
                 }
                 for i in range(1, 4)
             ],
@@ -296,10 +317,14 @@ class TestBatchAddLabelsIntegration:
     def test_batch_add_labels_to_multiple_issues(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test adding labels to multiple issues in batch."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create test issues
         create_result = batch_create_issues(
             issues=[
@@ -307,7 +332,7 @@ class TestBatchAddLabelsIntegration:
                     "title": f"[TEST] Label test {i}",
                     "body": "Label test",
                     "labels": ["test"],
-                    "milestone": 7,
+                    "milestone": test_milestone,
                 }
                 for i in range(1, 4)
             ],
@@ -391,10 +416,14 @@ class TestBatchLinkToProjectIntegration:
     def test_batch_link_issues_to_project(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
         """Test linking multiple issues to a project board."""
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         # Create test issues
         create_result = batch_create_issues(
             issues=[
@@ -402,7 +431,7 @@ class TestBatchLinkToProjectIntegration:
                     "title": f"[TEST] Project link test {i}",
                     "body": "Project link test",
                     "labels": ["test"],
-                    "milestone": 7,
+                    "milestone": test_milestone,
                 }
                 for i in range(1, 4)
             ],
@@ -457,6 +486,7 @@ class TestBatchOperationsPerformance:
     def test_batch_create_10_issues_benchmark(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -464,12 +494,15 @@ class TestBatchOperationsPerformance:
 
         Expected: < 5 seconds for 10 issues with max_workers=5
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         issues_data = [
             {
                 "title": f"[TEST] Benchmark issue {i}",
                 "body": "Performance benchmark test",
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             }
             for i in range(10)
         ]
@@ -498,6 +531,7 @@ class TestBatchOperationsPerformance:
     def test_batch_operations_concurrency_levels(
         self,
         test_config: dict,
+        test_milestone: int | None,
         created_issues: list[int],
         cleanup_issues: None,
     ) -> None:
@@ -505,13 +539,16 @@ class TestBatchOperationsPerformance:
 
         Tests max_workers: 1, 3, 5, 10 to find optimal concurrency.
         """
+        if test_milestone is None:
+            pytest.skip("No milestone available in test repository")
+
         num_issues = 10
         issues_data = [
             {
                 "title": f"[TEST] Concurrency test {i}",
                 "body": "Concurrency test",
                 "labels": ["test"],
-                "milestone": 7,
+                "milestone": test_milestone,
             }
             for i in range(num_issues)
         ]
