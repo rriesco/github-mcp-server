@@ -227,14 +227,13 @@ pip-audit  # If available
 
 **Key Dependencies**:
 - `PyGithub>=2.1.1` - Well-maintained, no known vulnerabilities
-- `python-dotenv>=1.0.0` - Secure env loading
 - `mcp>=0.9.0` - Official Anthropic MCP SDK
 
 ### ✅ PASSED - Minimal Dependencies
 
 **Finding**: Small dependency footprint reduces attack surface
 **Evidence**:
-- Only 3-4 core dependencies
+- Only 2 core dependencies
 - No unnecessary packages
 - All dependencies have clear security track records
 

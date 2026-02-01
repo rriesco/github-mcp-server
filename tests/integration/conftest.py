@@ -5,20 +5,10 @@ Provides test configuration, GitHub client setup, and cleanup utilities.
 
 import os
 from collections.abc import Generator
-from pathlib import Path
 
 import pytest
-from dotenv import load_dotenv
 from github import Auth, Github
 from github.Repository import Repository
-
-# Load test environment variables
-TEST_ENV_FILE = Path(__file__).parent.parent.parent / ".env.test"
-if TEST_ENV_FILE.exists():
-    load_dotenv(TEST_ENV_FILE)
-else:
-    # Fall back to regular .env for local development
-    load_dotenv()
 
 
 @pytest.fixture(scope="session")

@@ -46,18 +46,16 @@ Integration tests require a GitHub Personal Access Token.
 
 **Configure Environment**:
 
-Create `.env.test` file (or use `.env`):
+Export environment variables before running tests:
 ```bash
-# github-mcp-server/.env.test
-GITHUB_TOKEN=ghp_your_token_here
-TEST_OWNER=your-username
-TEST_REPO=your-test-repo
+export GITHUB_TOKEN=ghp_your_token_here
+export TEST_OWNER=your-username
+export TEST_REPO=your-test-repo
 ```
 
-**Alternative**: Copy from example:
+**Alternative**: Set inline with command:
 ```bash
-cp .env.test.example .env.test
-# Edit .env.test and add your token
+GITHUB_TOKEN=ghp_xxx TEST_OWNER=your-username TEST_REPO=your-repo uv run pytest tests/integration/ -v
 ```
 
 ## Running Tests
@@ -77,7 +75,7 @@ uv run pytest tests/test_setup.py -v
 Run integration tests that make real GitHub API calls:
 
 ```bash
-# Requires GITHUB_TOKEN in .env or .env.test
+# Requires GITHUB_TOKEN, TEST_OWNER, TEST_REPO environment variables
 uv run pytest tests/integration/ -v -m integration
 ```
 
@@ -138,9 +136,9 @@ Measure token usage comparing MCP tools vs. Python scripts to validate projected
 ### Running Measurements
 
 ```bash
-# Requires GITHUB_TOKEN in .env
+# Requires GITHUB_TOKEN environment variable
 cd github-mcp-server
-uv run python tests/token_measurement/measure.py
+GITHUB_TOKEN=ghp_xxx uv run python tests/token_measurement/measure.py
 ```
 
 ### Output
@@ -235,12 +233,11 @@ def test_create_issue(..., created_issues: List[int], cleanup_issues: None):
 
 ### Test Repository
 
-Tests use repository specified in `.env.test`:
+Tests use repository specified via environment variables:
 
 ```bash
-# .env.test
-TEST_OWNER=your-username
-TEST_REPO=your-test-repo
+export TEST_OWNER=your-username
+export TEST_REPO=your-test-repo
 ```
 
 Integration tests require both `TEST_OWNER` and `TEST_REPO` environment variables to be set.
@@ -312,8 +309,8 @@ To reach 85%+ coverage target:
 
 **Solution**:
 ```bash
-# Create .env.test file
-echo "GITHUB_TOKEN=ghp_your_token_here" > .env.test
+# Export the environment variable
+export GITHUB_TOKEN=ghp_your_token_here
 ```
 
 ### "Coverage failure: total of 23 is less than fail-under=85"

@@ -27,24 +27,32 @@ This document provides comprehensive documentation for all MCP tools provided by
 
 Get started with the GitHub MCP Server in 5 minutes:
 
-1. **Setup Authentication**
-   ```bash
-   cd github-mcp-server
-   echo "GITHUB_TOKEN=ghp_your_token_here" > .env
+1. **Configure MCP Server**
+   Add to your Claude Code MCP configuration (`.mcp.json` or `~/.config/claude-code/mcp-config.json`):
+   ```json
+   {
+     "mcpServers": {
+       "github-manager": {
+         "type": "stdio",
+         "command": "uvx",
+         "args": ["github-mcp-server"],
+         "env": {
+           "GITHUB_TOKEN": "ghp_your_token_here",
+           "GITHUB_OWNER": "your-username",
+           "GITHUB_REPO": "your-repo"
+         }
+       }
+     }
+   }
    ```
 
-2. **Start the MCP Server**
-   ```bash
-   uv run python src/github_mcp_server/server.py
-   ```
-
-3. **Use from Claude Code**
+2. **Use from Claude Code**
    The tools are automatically available. Try:
    ```
    "Create an issue titled 'Test Issue' with label 'test' in milestone 1"
    ```
 
-4. **Verify Setup**
+3. **Verify Setup**
    Check that Claude Code can see the tools:
    ```
    "List all available GitHub tools"
@@ -1396,9 +1404,14 @@ All tools require a valid GitHub Personal Access Token (PAT) with appropriate sc
 - `workflow` - Workflow access (for CI operations)
 
 **Setup:**
-1. Create `.env` file in `github-mcp-server/` directory
-2. Add: `GITHUB_TOKEN=ghp_your_token_here`
-3. Token is automatically loaded by the server
+Configure `GITHUB_TOKEN` in your `.mcp.json` environment configuration:
+```json
+{
+  "env": {
+    "GITHUB_TOKEN": "ghp_your_token_here"
+  }
+}
+```
 
 ---
 
@@ -1503,11 +1516,11 @@ uv run python github-manager/check_ci_status.py branch-name
 ```
 
 **Solutions:**
-1. Check `.env` file exists in `github-mcp-server/` directory
-2. Verify `GITHUB_TOKEN` is set correctly (starts with `ghp_`)
+1. Check `GITHUB_TOKEN` is configured in your `.mcp.json` file
+2. Verify token is set correctly (starts with `ghp_`)
 3. Regenerate token at: https://github.com/settings/tokens
 4. Ensure token has required scopes: `repo`, `project`, `workflow`
-5. Restart MCP server after updating `.env`
+5. Restart MCP server after updating configuration
 
 ### Issue: "RESOURCE_NOT_FOUND" for milestone
 
@@ -1627,9 +1640,9 @@ API rate limit exceeded
 
 If issues persist:
 1. Check server logs in console output
-2. Enable debug logging: Set `LOG_LEVEL=DEBUG` in `.env`
+2. Enable debug logging: Set `LOG_LEVEL=DEBUG` in your `.mcp.json` env configuration
 3. Test with individual tools first before batch operations
-4. Verify against GitHub API directly: `curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user`
+4. Verify against GitHub API directly: `curl -H "Authorization: token YOUR_TOKEN" https://api.github.com/user`
 5. Check the project repository for known issues and solutions
 
 ---

@@ -1,6 +1,6 @@
 [project]
 name = "rriesco-mcp-github"
-version = "0.1.4"
+version = "0.1.5"
 description = "MCP server for GitHub API operations - issues, PRs, CI, milestones"
 readme = "README.md"
 license = {text = "MIT"}
@@ -22,7 +22,6 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=0.9.0",
     "PyGithub>=2.1.0",
-    "python-dotenv>=1.0.0",
 ]
 
 [project.urls]
