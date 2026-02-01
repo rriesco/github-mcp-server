@@ -35,7 +35,7 @@ class BatchOperationResult:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary format."""
-        result = {
+        result: dict[str, Any] = {
             "index": self.index,
             "success": self.success,
         }
@@ -400,7 +400,9 @@ def _link_issue_to_project(
         }
 
         # Execute GraphQL mutation
-        result = gh._Github__requester.requestJsonAndCheck(
+        # Note: Accessing PyGithub internal API for GraphQL support
+        requester = getattr(gh, "_Github__requester")
+        result = requester.requestJsonAndCheck(
             "POST",
             "/graphql",
             input={"query": query, "variables": variables},

@@ -8,6 +8,8 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from github import GithubObject
+
 from github_mcp_server.tools.milestones import create_milestone, list_milestones
 
 
@@ -54,7 +56,8 @@ class TestCreateMilestone:
         assert call_args["title"] == "Phase 4: Essential Tools"
         assert call_args["description"] == "Implement 8 essential MCP tools"
         assert call_args["state"] == "open"
-        assert "due_on" not in call_args or call_args["due_on"] is None
+        # due_on should be NotSet when no due_date is provided
+        assert call_args["due_on"] is GithubObject.NotSet
 
     @patch("github_mcp_server.tools.milestones.get_github_client")
     def test_create_milestone_with_due_date(self, mock_get_client: Mock) -> None:

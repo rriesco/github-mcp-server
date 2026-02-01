@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 # Import the singleton mcp instance from package level
 from . import mcp
 
+__all__ = ["mcp", "main"]
+
 # Load environment variables from project root .env file
 # This file is at: github-mcp-server/src/github_mcp_server/server.py
 # Project root is 3 levels up

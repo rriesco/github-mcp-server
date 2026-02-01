@@ -7,6 +7,8 @@ import logging
 import subprocess
 from typing import Any
 
+from github import GithubObject
+
 from ..config.defaults import DEFAULT_REPOSITORY
 from ..server import mcp
 from ..utils.errors import handle_github_error
@@ -276,7 +278,12 @@ def update_pr(
 
         # Only call edit if there are updates
         if updates:
-            pr.edit(**updates)
+            pr.edit(
+                title=updates.get("title", GithubObject.NotSet),
+                body=updates.get("body", GithubObject.NotSet),
+                base=updates.get("base", GithubObject.NotSet),
+                state=updates.get("state", GithubObject.NotSet),
+            )
             logger.info(f"Updated PR #{pr_number}: {', '.join(updated_fields)}")
         else:
             logger.info(f"No updates provided for PR #{pr_number}")
@@ -371,8 +378,8 @@ def merge_pr(
         # Merge the PR
         merge_result = pr.merge(
             merge_method=merge_method,
-            commit_title=commit_title,
-            commit_message=commit_message,
+            commit_title=commit_title if commit_title is not None else GithubObject.NotSet,
+            commit_message=commit_message if commit_message is not None else GithubObject.NotSet,
         )
 
         logger.info(f"Successfully merged PR #{pr_number} with SHA {merge_result.sha}")

@@ -8,6 +8,8 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from github import GithubObject
+
 from github_mcp_server.tools.pulls import get_pull_request, merge_pr, update_pr
 
 
@@ -389,7 +391,12 @@ class TestUpdatePR:
         assert "github.com" in result["url"]
 
         # Verify edit was called with correct parameters
-        mock_pr.edit.assert_called_once_with(title="Updated title")
+        mock_pr.edit.assert_called_once_with(
+            title="Updated title",
+            body=GithubObject.NotSet,
+            base=GithubObject.NotSet,
+            state=GithubObject.NotSet,
+        )
         mock_repo.get_pull.assert_called_once_with(42)
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
@@ -416,7 +423,12 @@ class TestUpdatePR:
 
         # Verify
         assert result["updated_fields"] == ["body"]
-        mock_pr.edit.assert_called_once_with(body=new_body)
+        mock_pr.edit.assert_called_once_with(
+            title=GithubObject.NotSet,
+            body=new_body,
+            base=GithubObject.NotSet,
+            state=GithubObject.NotSet,
+        )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
     def test_update_base_branch(self, mock_get_client: Mock) -> None:
@@ -441,7 +453,12 @@ class TestUpdatePR:
 
         # Verify
         assert result["updated_fields"] == ["base"]
-        mock_pr.edit.assert_called_once_with(base="develop")
+        mock_pr.edit.assert_called_once_with(
+            title=GithubObject.NotSet,
+            body=GithubObject.NotSet,
+            base="develop",
+            state=GithubObject.NotSet,
+        )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
     def test_close_pr_via_state(self, mock_get_client: Mock) -> None:
@@ -467,7 +484,12 @@ class TestUpdatePR:
         # Verify
         assert result["state"] == "closed"
         assert result["updated_fields"] == ["state"]
-        mock_pr.edit.assert_called_once_with(state="closed")
+        mock_pr.edit.assert_called_once_with(
+            title=GithubObject.NotSet,
+            body=GithubObject.NotSet,
+            base=GithubObject.NotSet,
+            state="closed",
+        )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
     def test_reopen_pr_via_state(self, mock_get_client: Mock) -> None:
@@ -493,7 +515,12 @@ class TestUpdatePR:
         # Verify
         assert result["state"] == "open"
         assert result["updated_fields"] == ["state"]
-        mock_pr.edit.assert_called_once_with(state="open")
+        mock_pr.edit.assert_called_once_with(
+            title=GithubObject.NotSet,
+            body=GithubObject.NotSet,
+            base=GithubObject.NotSet,
+            state="open",
+        )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
     def test_update_multiple_fields(self, mock_get_client: Mock) -> None:
@@ -668,14 +695,13 @@ class TestUpdatePR:
         # Execute - only update title, not body or state
         update_pr(pr_number=42, title="New title")
 
-        # Verify only title was passed to edit
-        mock_pr.edit.assert_called_once_with(title="New title")
-        # Body and state should not be in the update call
-        call_kwargs = mock_pr.edit.call_args[1]
-        assert "title" in call_kwargs
-        assert "body" not in call_kwargs
-        assert "state" not in call_kwargs
-        assert "base" not in call_kwargs
+        # Verify edit was called - other params are NotSet (not missing)
+        mock_pr.edit.assert_called_once_with(
+            title="New title",
+            body=GithubObject.NotSet,
+            base=GithubObject.NotSet,
+            state=GithubObject.NotSet,
+        )
 
 
 class TestMergePR:
@@ -720,7 +746,9 @@ class TestMergePR:
 
         # Verify merge was called with correct parameters
         mock_pr.merge.assert_called_once_with(
-            merge_method="squash", commit_title=None, commit_message=None
+            merge_method="squash",
+            commit_title=GithubObject.NotSet,
+            commit_message=GithubObject.NotSet,
         )
         mock_repo.get_pull.assert_called_once_with(42)
 
@@ -756,7 +784,9 @@ class TestMergePR:
         assert result["merged"] is True
         assert result["sha"] == "xyz789abc123"
         mock_pr.merge.assert_called_once_with(
-            merge_method="merge", commit_title=None, commit_message=None
+            merge_method="merge",
+            commit_title=GithubObject.NotSet,
+            commit_message=GithubObject.NotSet,
         )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
@@ -791,7 +821,9 @@ class TestMergePR:
         assert result["merged"] is True
         assert result["sha"] == "def456ghi789"
         mock_pr.merge.assert_called_once_with(
-            merge_method="rebase", commit_title=None, commit_message=None
+            merge_method="rebase",
+            commit_title=GithubObject.NotSet,
+            commit_message=GithubObject.NotSet,
         )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
@@ -867,7 +899,9 @@ class TestMergePR:
         assert result["merged"] is True
         assert result["branch_deleted"] is False
         mock_pr.merge.assert_called_once_with(
-            merge_method="squash", commit_title=None, commit_message=None
+            merge_method="squash",
+            commit_title=GithubObject.NotSet,
+            commit_message=GithubObject.NotSet,
         )
 
     @patch("github_mcp_server.tools.pulls.get_github_client")
@@ -1155,5 +1189,7 @@ class TestMergePR:
             assert result["merged"] is True
             assert result["sha"] == f"sha_{method}"
             mock_pr.merge.assert_called_with(
-                merge_method=method, commit_title=None, commit_message=None
+                merge_method=method,
+                commit_title=GithubObject.NotSet,
+                commit_message=GithubObject.NotSet,
             )

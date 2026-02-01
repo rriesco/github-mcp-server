@@ -193,15 +193,11 @@ def get_ci_logs(
             all_runs = repository.get_workflow_runs()
             runs = [run for run in all_runs if run.head_branch == branch]
 
-            try:
-                workflow_run = runs[0] if len(runs) > 0 else None
-            except (IndexError, StopIteration):
-                workflow_run = None
-
-            if not workflow_run:
+            if len(runs) == 0:
                 logger.info(f"No CI runs found for branch: {branch}")
                 raise ValueError(f"No CI runs found for branch: {branch}")
 
+            workflow_run = runs[0]
             logger.info(f"Retrieved latest workflow run for branch {branch}")
 
         # Get jobs for the run

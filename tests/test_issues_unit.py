@@ -8,6 +8,8 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from github import GithubObject
+
 from github_mcp_server.tools.issues import close_issue, create_issues, list_issues
 
 
@@ -559,7 +561,7 @@ class TestCloseIssue:
 
         # Verify API calls
         mock_repo.get_issue.assert_called_once_with(123)
-        mock_issue.edit.assert_called_once_with(state="closed", state_reason=None)
+        mock_issue.edit.assert_called_once_with(state="closed", state_reason=GithubObject.NotSet)
         mock_issue.create_comment.assert_not_called()
 
     @patch("github_mcp_server.tools.issues.get_github_client")
@@ -588,7 +590,7 @@ class TestCloseIssue:
 
         # Verify API calls
         mock_issue.create_comment.assert_called_once_with("Resolved in PR #456")
-        mock_issue.edit.assert_called_once_with(state="closed", state_reason=None)
+        mock_issue.edit.assert_called_once_with(state="closed", state_reason=GithubObject.NotSet)
 
     @patch("github_mcp_server.tools.issues.get_github_client")
     def test_close_issue_with_state_reason_completed(self, mock_get_client: Mock) -> None:

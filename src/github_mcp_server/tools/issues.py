@@ -8,6 +8,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
+from github import GithubObject
+from github.Issue import Issue
+from github.Milestone import Milestone
+
 from ..config.defaults import DEFAULT_REPOSITORY
 from ..server import mcp
 from ..utils.errors import handle_github_error
@@ -181,27 +185,18 @@ def list_issues(
         gh = get_github_client()
         repository = gh.get_repo(f"{owner}/{repo}")
 
-        # Build filter parameters for PyGithub
-        filter_params = {
-            "state": state,
-            "sort": sort,
-            "direction": direction,
-        }
-
-        # Add optional filters
-        if labels:
-            filter_params["labels"] = labels
-
+        # Find milestone object if specified
+        milestone_obj: Any = GithubObject.NotSet
         if milestone:
             # Find milestone by title
             milestones = repository.get_milestones(state="all")
-            milestone_obj = None
+            found_milestone: Milestone | None = None
             for ms in milestones:
                 if ms.title == milestone:
-                    milestone_obj = ms
+                    found_milestone = ms
                     break
 
-            if milestone_obj is None:
+            if found_milestone is None:
                 # No matching milestone found - return empty results
                 logger.warning(f"Milestone '{milestone}' not found in {owner}/{repo}")
                 return {
@@ -210,16 +205,20 @@ def list_issues(
                     "issues": [],
                 }
 
-            filter_params["milestone"] = milestone_obj
-
-        if assignee is not None:
-            filter_params["assignee"] = assignee
+            milestone_obj = found_milestone
 
         # Fetch issues with filters
-        issues_paginated = repository.get_issues(**filter_params)
+        issues_paginated = repository.get_issues(
+            state=state,
+            sort=sort,
+            direction=direction,
+            labels=labels if labels else GithubObject.NotSet,
+            milestone=milestone_obj,
+            assignee=assignee if assignee is not None else GithubObject.NotSet,
+        )
 
         # Convert to list with limit
-        issues_list = []
+        issues_list: list[Issue] = []
         for issue in issues_paginated:
             if len(issues_list) >= limit:
                 break
@@ -292,7 +291,10 @@ def close_issue(
             logger.info(f"Added closing comment to issue #{issue_number}")
 
         # Close the issue with optional state_reason
-        issue.edit(state="closed", state_reason=state_reason)
+        issue.edit(
+            state="closed",
+            state_reason=state_reason if state_reason is not None else GithubObject.NotSet,
+        )
 
         logger.info(
             f"Closed issue #{issue_number}"

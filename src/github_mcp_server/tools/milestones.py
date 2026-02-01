@@ -7,6 +7,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from github import GithubObject
+
 from ..config.defaults import DEFAULT_REPOSITORY
 from ..server import mcp
 from ..utils.errors import handle_github_error
@@ -51,15 +53,12 @@ def create_milestone(
                 ) from e
 
         # Create milestone
-        create_kwargs = {
-            "title": title,
-            "state": state,
-            "description": description,
-        }
-        if due_on:
-            create_kwargs["due_on"] = due_on
-
-        milestone = repository.create_milestone(**create_kwargs)
+        milestone = repository.create_milestone(
+            title=title,
+            state=state,
+            description=description,
+            due_on=due_on if due_on is not None else GithubObject.NotSet,
+        )
 
         logger.info(f"Created milestone #{milestone.number}: {title}")
 
