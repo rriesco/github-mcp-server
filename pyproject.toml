@@ -1,6 +1,6 @@
 [project]
 name = "rriesco-mcp-github"
-version = "0.1.3"
+version = "0.1.4"
 description = "MCP server for GitHub API operations - issues, PRs, CI, milestones"
 readme = "README.md"
 license = {text = "MIT"}
